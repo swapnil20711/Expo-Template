@@ -1,3 +1,4 @@
+import '@/libs/i18n';
 import { useAuth } from '@clerk/clerk-expo';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';

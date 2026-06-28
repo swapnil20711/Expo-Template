@@ -1,6 +1,7 @@
 import { BottomSheet, Button, Column, Host, Picker, Slider, Switch } from '@expo/ui';
 import { Link } from 'expo-router';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,13 +11,22 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { changeAppLanguage } from '@/libs/i18n/change-language';
 import { isAuthConfigured } from '@/lib/env';
-import { type ColorSchemePreference, useSettingsStore } from '@/stores/settings-store';
+import {
+  type AppLanguage,
+  type ColorSchemePreference,
+  useSettingsStore,
+} from '@/stores/settings-store';
 
 const DENSITY_OPTIONS = ['comfortable', 'compact', 'spacious'] as const;
 type Density = (typeof DENSITY_OPTIONS)[number];
 
 const COLOR_SCHEME_OPTIONS: ColorSchemePreference[] = ['system', 'light', 'dark'];
+const LANGUAGE_OPTIONS: { value: AppLanguage; label: string }[] = [
+  { value: 'en', label: 'English' },
+  { value: 'ar', label: 'العربية' },
+];
 
 export default function ShowcaseScreen() {
   const safeAreaInsets = useSafeAreaInsets();
@@ -25,6 +35,7 @@ export default function ShowcaseScreen() {
     bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
   };
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const [reduceMotion, setReduceMotion] = useState(false);
   const [scale, setScale] = useState(0.5);
@@ -33,6 +44,14 @@ export default function ShowcaseScreen() {
 
   const colorSchemePreference = useSettingsStore((state) => state.colorScheme);
   const setColorSchemePreference = useSettingsStore((state) => state.setColorScheme);
+  const language = useSettingsStore((state) => state.language);
+  const setLanguage = useSettingsStore((state) => state.setLanguage);
+
+  const onSelectLanguage = (value: AppLanguage) => {
+    if (value === language) return;
+    setLanguage(value);
+    void changeAppLanguage(value);
+  };
 
   const contentPlatformStyle = Platform.select({
     android: {
@@ -86,6 +105,17 @@ export default function ShowcaseScreen() {
                 else — no conditional code on your end.
               </ThemedText>
             </GlassCard>
+          </Section>
+
+          {/* i18next + persisted language. Switching to Arabic flips the layout to RTL. */}
+          <Section title={t('settings.language')}>
+            <Host matchContents style={styles.host}>
+              <Picker selectedValue={language} onValueChange={onSelectLanguage}>
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <Picker.Item key={option.value} label={option.label} value={option.value} />
+                ))}
+              </Picker>
+            </Host>
           </Section>
 
           {/* Zustand store driving the app theme — persisted across launches. */}
